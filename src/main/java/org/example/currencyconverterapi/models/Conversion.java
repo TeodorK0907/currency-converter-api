@@ -1,35 +1,35 @@
 package org.example.currencyconverterapi.models;
 
+import org.springframework.data.annotation.Id;
+
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.Currency;
 import java.util.Objects;
 
 public class Conversion {
 
-    private static final RoundingMode DEFAULT_ROUNDING = RoundingMode.HALF_EVEN;
+    @Id
     private int id;
     private BigDecimal amount;
     private LocalDateTime timeStamp;
-    private Currency sourceCurrency;
-    private Currency targetCurrency;
-    private final String UUID;
+    private String sourceCurrency;
+    private String targetCurrency;
+    private String UUID;
 
     public Conversion () {
         this.UUID = java.util.UUID.randomUUID().toString();
     }
 
-    public Conversion(double amount, Currency targetCurrency) {
-        this(amount, targetCurrency, DEFAULT_ROUNDING);
-    }
 
-    private Conversion(double amount, Currency targetCurrency, RoundingMode roundingMode) {
+    public Conversion(int id, BigDecimal amount,
+                      LocalDateTime timeStamp, String sourceCurrency,
+                      String targetCurrency, String UUID) {
+        this.id = id;
+        this.amount = amount;
+        this.timeStamp = timeStamp;
+        this.sourceCurrency = sourceCurrency;
         this.targetCurrency = targetCurrency;
-        this.timeStamp = LocalDateTime.now();
-        this.UUID = java.util.UUID.randomUUID().toString();
-        this.amount = BigDecimal.valueOf(amount)
-                .setScale(targetCurrency.getDefaultFractionDigits(), roundingMode);
+        this.UUID = UUID;
     }
 
     public int getId() {
@@ -44,8 +44,8 @@ public class Conversion {
         return amount;
     }
 
-    public void setAmount(BigDecimal amount, Currency currency) {
-        this.amount = amount.setScale(currency.getDefaultFractionDigits(), DEFAULT_ROUNDING);
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
     }
 
     public LocalDateTime getTimeStamp() {
@@ -56,24 +56,28 @@ public class Conversion {
         this.timeStamp = timeStamp;
     }
 
-    public Currency getSourceCurrency() {
+    public String getSourceCurrency() {
         return sourceCurrency;
     }
 
-    public void setSourceCurrency(Currency sourceCurrency) {
+    public void setSourceCurrency(String sourceCurrency) {
         this.sourceCurrency = sourceCurrency;
     }
 
-    public Currency getTargetCurrency() {
+    public String getTargetCurrency() {
         return targetCurrency;
     }
 
-    public void setTargetCurrency(Currency targetCurrency) {
+    public void setTargetCurrency(String targetCurrency) {
         this.targetCurrency = targetCurrency;
     }
 
     public String getUUID() {
         return UUID;
+    }
+
+    public void setUUID(String UUID) {
+        this.UUID = UUID;
     }
 
     @Override
