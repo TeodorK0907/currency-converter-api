@@ -11,7 +11,11 @@ integration with an external API for exchange rates and conversion functionality
 
 Endpoint: `GET/exchange-rate`
 
-Description: Retrieves the exchange rate based on the provided currency code pairs and target currency.
+Description: Retrieves the exchange rate based on the provided currency code pairs and target currency.  
+The exchange rate response contains the following components:
+1. Quote in the target currency
+2. The target currency for which the quote corresponds to.
+
 
 ### 2. Create Conversion
 
@@ -29,7 +33,13 @@ The conversion contains the following components:
 Endpoint: `GET/conversions`
 
 Description: Returns a paginated list of created conversions in the system.  
-The paginated list can be filtered by either a unique transaction identifier or a timeframe.
+The paginated list can be filtered by either a unique transaction identifier or a timeframe.  
+The paginated conversion list contains the following components:
+1. Timestamp after to list all conversions after that point in time (Can be combined with timestamp before).
+2. Timestamp before to list all conversions before that point in time (Can be combined with timestamp after).
+3. Unique transaction identifier (UUID) for short to list either one or more transactions with the provided identifier.
+4. Page number on the list either the default (1) or a provided number as a query parameter if such page is available.
+5. Page size on the list either the default (5) or a provided number as a query parameter.
 
 ## Database
 
