@@ -18,7 +18,7 @@ import org.example.currencyconverterapi.models.output_dto.ConversionOutputDto;
 import org.example.currencyconverterapi.models.output_dto.ConversionOutputPageDto;
 import org.example.currencyconverterapi.models.output_dto.ExchangeRateOutputDto;
 import org.example.currencyconverterapi.models.input_dto.SourceCurrencyAmountDto;
-import org.example.currencyconverterapi.services.contracts.CurrencyService;
+import org.example.currencyconverterapi.services.contracts.ConversionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -35,15 +35,15 @@ public class ConversionController {
 
     private final CurrencyMapper currencyMapper;
     private final ConversionMapper conversionMapper;
-    private final CurrencyService currencyService;
+    private final ConversionService conversionService;
 
     @Autowired
     public ConversionController(CurrencyMapper currencyMapper,
                                 ConversionMapper conversionMapper,
-                                CurrencyService currencyService) {
+                                ConversionService conversionService) {
         this.currencyMapper = currencyMapper;
         this.conversionMapper = conversionMapper;
-        this.currencyService = currencyService;
+        this.conversionService = conversionService;
     }
 
     @GetMapping("/exchange-rate")
@@ -95,7 +95,7 @@ public class ConversionController {
         try {
             Currency source = currencyMapper.toCurrencyObj(sourceCurrency);
             Currency target = currencyMapper.toCurrencyObj(targetCurrency);
-            double exchangeRate = currencyService.getExchangeRate(source, target);
+            double exchangeRate = conversionService.getExchangeRate(source, target);
             ExchangeRateOutputDto outputDto =
                     conversionMapper.toOutputDto(exchangeRate, targetCurrency);
             return ResponseEntity.status(HttpStatus.OK).body(outputDto);
@@ -157,7 +157,7 @@ public class ConversionController {
 
         try {
             Conversion conversion = conversionMapper.toObj(sourceCurrency, targetCurrency);
-            currencyService.createConversionAmount(conversion, amountDto.getAmount());
+            conversionService.createConversionAmount(conversion, amountDto.getAmount());
             ConversionOutputDto outputDto = conversionMapper.toOutputDto(conversion);
             return ResponseEntity.status(HttpStatus.OK).body(outputDto);
         } catch (InvalidCurrencyCodeException e) {
@@ -244,7 +244,7 @@ public class ConversionController {
         try {
             ConversionFilterOptions filterOptions = new ConversionFilterOptions
                     (after, before, transactionId, pageNumber, pageSize);
-            Page<Conversion> conversions = currencyService.getAllWithFilter(filterOptions);
+            Page<Conversion> conversions = conversionService.getAllWithFilter(filterOptions);
             ConversionOutputPageDto output = conversionMapper.toConversionPageDto(conversions);
             return ResponseEntity.status(HttpStatus.OK).body(output);
         } catch (EntityNotFoundException e) {

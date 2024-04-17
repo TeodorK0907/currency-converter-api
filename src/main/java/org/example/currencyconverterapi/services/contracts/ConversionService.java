@@ -7,7 +7,7 @@ import org.springframework.data.domain.Page;
 import java.math.BigDecimal;
 import java.util.Currency;
 
-public interface CurrencyService {
+public interface ConversionService {
 
     double getExchangeRate(Currency source, Currency target);
 

@@ -6,8 +6,8 @@ import org.example.currencyconverterapi.exceptions.InvalidRequestException;
 import org.example.currencyconverterapi.exceptions.UnsuccessfulResponseException;
 import org.example.currencyconverterapi.models.Conversion;
 import org.example.currencyconverterapi.models.input_dto.ConversionFilterOptions;
-import org.example.currencyconverterapi.repositories.CurrencyRepository;
-import org.example.currencyconverterapi.services.contracts.CurrencyService;
+import org.example.currencyconverterapi.repositories.ConversionRepository;
+import org.example.currencyconverterapi.services.contracts.ConversionService;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +24,7 @@ import java.util.Optional;
 import static org.example.currencyconverterapi.helpers.ConstantHelper.*;
 
 @Service
-public class CurrencyServiceImpl implements CurrencyService {
+public class ConversionServiceImpl implements ConversionService {
 
     private final String INVALID_TIMEFRAME_ERROR_MESSAGE = "The provided timeframe is invalid";
     private final String NO_REQUEST_PARAM_ERROR_MESSAGE =
@@ -49,14 +49,14 @@ public class CurrencyServiceImpl implements CurrencyService {
     @Value("${currency.beacon.api-key}")
     private String key;
 
-    private final CurrencyRepository currencyRepository;
+    private final ConversionRepository conversionRepository;
 
     private final WebClientConfig webClient;
 
     @Autowired
-    public CurrencyServiceImpl(CurrencyRepository currencyRepository,
-                               WebClientConfig webClient) {
-        this.currencyRepository = currencyRepository;
+    public ConversionServiceImpl(ConversionRepository conversionRepository,
+                                 WebClientConfig webClient) {
+        this.conversionRepository = conversionRepository;
         this.webClient = webClient;
     }
 
@@ -83,7 +83,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         if (responseCode.getInt(RESPONSE_KEY_CODE) == CURRENCY_BEACON_SUCCESS) {
             JSONObject response = responseJSON.getJSONObject(RESPONSE_KEY_RESPONSE);
             processConversion(conversion, response);
-            currencyRepository.save(conversion);
+            conversionRepository.save(conversion);
             return;
         }
         throw new UnsuccessfulResponseException(COULD_NOT_PROCESS_REQUEST_ERROR_MESSAGE);
@@ -98,22 +98,22 @@ public class CurrencyServiceImpl implements CurrencyService {
                 getPageSize(filterOptions.getPageSize()));
         if (filterOptions.getBefore().isPresent() && filterOptions.getAfter().isPresent()) {
             validateTimeFrame(filterOptions);
-            conversionPage = currencyRepository.
+            conversionPage = conversionRepository.
                     findAllByTimeStampIsAfterAndTimeStampIsBeforeOrderByTimeStamp(
                             filterOptions.getAfter().get(),
                             filterOptions.getBefore().get(),
                             page
                     );
         } else if (filterOptions.getBefore().isPresent()) {
-            conversionPage = currencyRepository.findAllByTimeStampBeforeOrderByTimeStamp(
+            conversionPage = conversionRepository.findAllByTimeStampBeforeOrderByTimeStamp(
                     filterOptions.getBefore().get(),
                     page);
         } else if (filterOptions.getAfter().isPresent()) {
-            conversionPage = currencyRepository.findAllByTimeStampAfterOrderByTimeStamp(
+            conversionPage = conversionRepository.findAllByTimeStampAfterOrderByTimeStamp(
                     filterOptions.getAfter().get(),
                     page);
         } else {
-            conversionPage = currencyRepository.findAllByUUID(
+            conversionPage = conversionRepository.findAllByUUID(
                     filterOptions.getTransactionId().get(),
                     page);
         }
