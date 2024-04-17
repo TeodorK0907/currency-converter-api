@@ -1,4 +1,4 @@
-package org.example.currencyconverterapi.models;
+package org.example.currencyconverterapi.models.input_dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
