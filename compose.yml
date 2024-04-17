@@ -1,0 +1,7 @@
+services:
+  currency-converter-api:
+    build:
+      context: .
+    container_name: currency-converter-api
+    ports:
+      - "8080:8080"

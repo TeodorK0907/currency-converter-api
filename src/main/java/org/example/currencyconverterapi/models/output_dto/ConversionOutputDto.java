@@ -4,13 +4,15 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class ConversionOutputDto {
+
+    private static final int ZERO_NANO = 0;
     private final BigDecimal amount;
     private final LocalDateTime timeStamp;
     private final String UUID;
 
     public ConversionOutputDto(BigDecimal amount, LocalDateTime timeStamp, String UUID) {
         this.amount = amount;
-        this.timeStamp = timeStamp.withNano(0);
+        this.timeStamp = timeStamp.withNano(ZERO_NANO);
         this.UUID = UUID;
     }
 
