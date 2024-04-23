@@ -26,6 +26,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.time.LocalDateTime;
 import java.util.Currency;
 
@@ -90,19 +92,19 @@ public class ConversionController {
                     )
             }
     )
-    public ResponseEntity<?> getExchangeRate(@RequestParam String sourceCurrency,
-                                             @RequestParam String targetCurrency) {
+    public ResponseEntity<ExchangeRateOutputDto> getExchangeRate(@RequestParam String sourceCurrency,
+                                                                 @RequestParam String targetCurrency) {
         try {
             Currency source = currencyMapper.toCurrencyObj(sourceCurrency);
             Currency target = currencyMapper.toCurrencyObj(targetCurrency);
             double exchangeRate = conversionService.getExchangeRate(source, target);
             ExchangeRateOutputDto outputDto =
                     conversionMapper.toOutputDto(exchangeRate, targetCurrency);
-            return ResponseEntity.status(HttpStatus.OK).body(outputDto);
+            return ResponseEntity.ok(outputDto);
         } catch (InvalidCurrencyCodeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (UnsuccessfulResponseException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
 
@@ -151,19 +153,19 @@ public class ConversionController {
                     )
             }
     )
-    public ResponseEntity<?> createConversion(@RequestParam String sourceCurrency,
-                                              @RequestParam String targetCurrency,
-                                              @RequestBody @Valid SourceCurrencyAmountDto amountDto) {
+    public ResponseEntity<Conversion> createConversion(@RequestParam String sourceCurrency,
+                                                                @RequestParam String targetCurrency,
+                                                                @RequestBody @Valid SourceCurrencyAmountDto amountDto) {
 
         try {
             Conversion conversion = conversionMapper.toObj(sourceCurrency, targetCurrency);
             conversionService.createConversionAmount(conversion, amountDto.getAmount());
-            ConversionOutputDto outputDto = conversionMapper.toOutputDto(conversion);
-            return ResponseEntity.status(HttpStatus.OK).body(outputDto);
+           // ConversionOutputDto outputDto = conversionMapper.toOutputDto(conversion);
+            return ResponseEntity.ok(conversion);
         } catch (InvalidCurrencyCodeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (UnsuccessfulResponseException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
 
@@ -233,24 +235,24 @@ public class ConversionController {
                     )
             }
     )
-    public ResponseEntity<?> getConversions(@RequestParam(required = false)
-                                            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime after,
-                                            @RequestParam(required = false)
-                                            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime before,
-                                            @RequestParam(required = false) String transactionId,
-                                            @RequestParam(required = false) Integer pageNumber,
-                                            @RequestParam(required = false) Integer pageSize) {
+    public ResponseEntity<ConversionOutputPageDto> getConversions(@RequestParam(required = false)
+                                                                  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime after,
+                                                                  @RequestParam(required = false)
+                                                                  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime before,
+                                                                  @RequestParam(required = false) String transactionId,
+                                                                  @RequestParam(required = false) Integer pageNumber,
+                                                                  @RequestParam(required = false) Integer pageSize) {
 
         try {
             ConversionFilterOptions filterOptions = new ConversionFilterOptions
                     (after, before, transactionId, pageNumber, pageSize);
             Page<Conversion> conversions = conversionService.getAllWithFilter(filterOptions);
             ConversionOutputPageDto output = conversionMapper.toConversionPageDto(conversions);
-            return ResponseEntity.status(HttpStatus.OK).body(output);
+            return ResponseEntity.ok(output);
         } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         } catch (InvalidRequestException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
 }

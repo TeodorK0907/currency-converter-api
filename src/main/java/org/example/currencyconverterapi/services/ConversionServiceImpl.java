@@ -1,9 +1,8 @@
 package org.example.currencyconverterapi.services;
 
 import org.example.currencyconverterapi.configurations.WebClientConfig;
-import org.example.currencyconverterapi.exceptions.EntityNotFoundException;
-import org.example.currencyconverterapi.exceptions.InvalidRequestException;
 import org.example.currencyconverterapi.exceptions.UnsuccessfulResponseException;
+import org.example.currencyconverterapi.helpers.ConversionFilterOptionsValidator;
 import org.example.currencyconverterapi.models.Conversion;
 import org.example.currencyconverterapi.models.input_dto.ConversionFilterOptions;
 import org.example.currencyconverterapi.repositories.ConversionRepository;
@@ -18,21 +17,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Currency;
-import java.util.Optional;
+import java.util.*;
 
 import static org.example.currencyconverterapi.helpers.ConstantHelper.*;
 
 @Service
 public class ConversionServiceImpl implements ConversionService {
-
-    private final String INVALID_TIMEFRAME_ERROR_MESSAGE = "The provided timeframe is invalid";
-    private final String NO_REQUEST_PARAM_ERROR_MESSAGE =
-            "Please provide either a transaction date or transaction identifier.";
-    private final String BOTH_FILTER_CRITERIA_USED_ERROR_MESSAGE = "You may filter either by transaction date" +
-            " or transaction identifier, not both";
-    private final int DEFAULT_PAGE = 0;
-    private final int DEFAULT_PAGE_SIZE = 5;
     private final String API_KEY_REQUEST_PARAM = "api_key";
     private final String BASE_CURRENCY_REQUEST_PARAM = "base";
     private final String FROM_REQUEST_PARAM = "from";
@@ -69,7 +59,6 @@ public class ConversionServiceImpl implements ConversionService {
             JSONObject response = responseJSON.getJSONObject(RESPONSE_KEY_RESPONSE);
             JSONObject exchangeRateJson = response.getJSONObject(RESPONSE_KEY_RATES);
             return exchangeRateJson.getDouble(target.getCurrencyCode());
-//            return getCurrencyExchangeRate(target, response);
         }
         throw new UnsuccessfulResponseException(COULD_NOT_PROCESS_REQUEST_ERROR_MESSAGE);
     }
@@ -91,13 +80,13 @@ public class ConversionServiceImpl implements ConversionService {
 
     @Override
     public Page<Conversion> getAllWithFilter(ConversionFilterOptions filterOptions) {
-        isFilterOptionsEmpty(filterOptions);
-        areBothCriteriaUsed(filterOptions);
+        ConversionFilterOptionsValidator.isFilterOptionsEmpty(filterOptions);
+        ConversionFilterOptionsValidator.areBothCriteriaUsed(filterOptions);
         Page<Conversion> conversionPage;
-        Pageable page = PageRequest.of(getPageNum(filterOptions.getPageNumber()),
-                getPageSize(filterOptions.getPageSize()));
+        Pageable page = PageRequest.of(ConversionFilterOptionsValidator.getPageNum(filterOptions.getPageNumber()),
+                ConversionFilterOptionsValidator.getPageSize(filterOptions.getPageSize()));
         if (filterOptions.getBefore().isPresent() && filterOptions.getAfter().isPresent()) {
-            validateTimeFrame(filterOptions);
+            ConversionFilterOptionsValidator.validateTimeFrame(filterOptions);
             conversionPage = conversionRepository.
                     findAllByTimeStampIsAfterAndTimeStampIsBeforeOrderByTimeStamp(
                             filterOptions.getAfter().get(),
@@ -117,7 +106,7 @@ public class ConversionServiceImpl implements ConversionService {
                     filterOptions.getTransactionId().get(),
                     page);
         }
-        validateIfPageContentIsEmpty(conversionPage);
+        ConversionFilterOptionsValidator.validateIfPageContentIsEmpty(conversionPage, filterOptions);
         return conversionPage;
     }
 
@@ -152,46 +141,5 @@ public class ConversionServiceImpl implements ConversionService {
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
-    }
-
-    private int getPageNum(Optional<Integer> pageNum) {
-        if (pageNum.isEmpty()) {
-            return DEFAULT_PAGE;
-        }
-        return pageNum.get() - 1;
-    }
-
-    private int getPageSize(Optional<Integer> pageSize) {
-        if (pageSize.isEmpty()) {
-            return DEFAULT_PAGE_SIZE;
-        }
-        return pageSize.get();
-    }
-
-    private void validateTimeFrame(ConversionFilterOptions filterOptions) {
-        if (filterOptions.getAfter().get().isAfter(filterOptions.getBefore().get())) {
-            throw new InvalidRequestException(INVALID_TIMEFRAME_ERROR_MESSAGE);
-        }
-    }
-
-    private void isFilterOptionsEmpty(ConversionFilterOptions filterOptions) {
-        if (filterOptions.getAfter().isEmpty()
-                && filterOptions.getBefore().isEmpty()
-                && filterOptions.getTransactionId().isEmpty()) {
-            throw new InvalidRequestException(NO_REQUEST_PARAM_ERROR_MESSAGE);
-        }
-    }
-
-    private void areBothCriteriaUsed(ConversionFilterOptions filterOptions) {
-        if ((filterOptions.getAfter().isPresent() || filterOptions.getBefore().isPresent())
-                && filterOptions.getTransactionId().isPresent()) {
-            throw new InvalidRequestException(BOTH_FILTER_CRITERIA_USED_ERROR_MESSAGE);
-        }
-    }
-
-    private void validateIfPageContentIsEmpty(Page<Conversion> conversionPage) {
-        if (conversionPage.getContent().isEmpty()) {
-            throw new EntityNotFoundException(ENTITY_NOT_FOUND_ERROR_MESSAGE);
-        }
     }
 }
