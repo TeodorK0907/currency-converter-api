@@ -32,7 +32,8 @@ public class ConversionMapper {
     }
 
     public ConversionOutputDto toOutputDto(Conversion conversion) {
-        return new ConversionOutputDto(roundAmount(conversion.getTargetCurrency(), conversion.getAmount()),
+        return new ConversionOutputDto(conversion.getId(),
+                roundAmount(conversion.getTargetCurrency(), conversion.getAmount()),
                 conversion.getTimeStamp(),
                 conversion.getUUID());
     }
