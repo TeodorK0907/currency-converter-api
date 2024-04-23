@@ -18,8 +18,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Currency;
-import java.util.Optional;
+import java.util.*;
 
 import static org.example.currencyconverterapi.helpers.ConstantHelper.*;
 
@@ -69,7 +68,6 @@ public class ConversionServiceImpl implements ConversionService {
             JSONObject response = responseJSON.getJSONObject(RESPONSE_KEY_RESPONSE);
             JSONObject exchangeRateJson = response.getJSONObject(RESPONSE_KEY_RATES);
             return exchangeRateJson.getDouble(target.getCurrencyCode());
-//            return getCurrencyExchangeRate(target, response);
         }
         throw new UnsuccessfulResponseException(COULD_NOT_PROCESS_REQUEST_ERROR_MESSAGE);
     }
@@ -117,7 +115,7 @@ public class ConversionServiceImpl implements ConversionService {
                     filterOptions.getTransactionId().get(),
                     page);
         }
-        validateIfPageContentIsEmpty(conversionPage);
+        validateIfPageContentIsEmpty(conversionPage, filterOptions);
         return conversionPage;
     }
 
@@ -189,9 +187,39 @@ public class ConversionServiceImpl implements ConversionService {
         }
     }
 
-    private void validateIfPageContentIsEmpty(Page<Conversion> conversionPage) {
+    private void validateIfPageContentIsEmpty(Page<Conversion> conversionPage,
+                                              ConversionFilterOptions filterOptions) {
         if (conversionPage.getContent().isEmpty()) {
-            throw new EntityNotFoundException(ENTITY_NOT_FOUND_ERROR_MESSAGE);
+            StringBuilder sb = new StringBuilder("No conversions with ");
+            List<String> params = new ArrayList<>();
+
+            filterOptions.getAfter().ifPresent(param -> {
+                if (!param.toString().isBlank()) {
+                    params.add(String.format(ENTITY_NOT_FOUND_AFTER_TIMESTAMP_BASE_MESSAGE, param));
+                }
+            });
+
+            filterOptions.getBefore().ifPresent(param -> {
+                if (!param.toString().isBlank()) {
+                    params.add(String.format(ENTITY_NOT_FOUND_BEFORE_TIMESTAMP_BASE_MESSAGE, param));
+                }
+            });
+
+            filterOptions.getTransactionId().ifPresent(param -> {
+                if (!param.isBlank()) {
+                    params.add(String.format(ENTITY_NOT_FOUND_TRANSACTION_ID_BASE_MESSAGE, param));
+                }
+            });
+
+            filterOptions.getPageNumber().ifPresent(param -> {
+                if (!param.toString().isBlank()) {
+                    params.add(String.format(ENTITY_NOT_FOUND_PAGE_NUM_BASE_MESSAGE, param));
+                }
+            });
+            sb.append(String.join(", ", params));
+            sb.append(ENTITY_NOT_FOUND_ENDING_MESSAGE);
+            System.out.println(sb);
+            throw new EntityNotFoundException(sb.toString());
         }
     }
 }
