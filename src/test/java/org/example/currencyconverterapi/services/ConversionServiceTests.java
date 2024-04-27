@@ -1,8 +1,9 @@
 package org.example.currencyconverterapi.services;
 
-import org.example.currencyconverterapi.configurations.WebClientConfig;
+import org.example.currencyconverterapi.clients.contracts.CurrencyBeaconClient;
 import org.example.currencyconverterapi.exceptions.EntityNotFoundException;
 import org.example.currencyconverterapi.exceptions.InvalidRequestException;
+import org.example.currencyconverterapi.exceptions.UnsuccessfulResponseException;
 import org.example.currencyconverterapi.models.Conversion;
 import org.example.currencyconverterapi.models.input_dto.ConversionFilterOptions;
 import org.example.currencyconverterapi.repositories.ConversionRepository;
@@ -18,10 +19,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.reactive.function.client.WebClient;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.List;
 
 import static org.example.currencyconverterapi.helpers.Helpers.*;
@@ -32,9 +34,7 @@ public class ConversionServiceTests {
     @Mock
     private ConversionRepository currencyRepo;
     @Mock
-    private WebClientConfig webClient;
-    @Mock
-    private WebClient client;
+    private CurrencyBeaconClient client;
     @InjectMocks
     private ConversionServiceImpl currencyService;
 
@@ -52,6 +52,73 @@ public class ConversionServiceTests {
         page = PageRequest.of(0, 5);
         conversions = List.of(mockConversion, anotherMockConversion);
         output = new PageImpl<>(conversions);
+    }
+
+    @Test
+    void getExchangeRate_Should_ReturnExchangeRate_When_ArgumentsValid() {
+        //Arrange
+        String mockResponse = createMockExchangeRateResponse();
+        Currency mockSource = createMockCurrency();
+        Currency mockTarget = createAnotherMockCurrency();
+        Double mockExchangeRate = null;
+
+        Mockito.when(client.getExchangeRateResponse
+                (mockSource.getCurrencyCode())).thenReturn(mockResponse);
+
+        //Act
+        mockExchangeRate = currencyService.getExchangeRate(mockSource, mockTarget);
+
+        //Assert
+        Mockito.verify(client, Mockito.times(1))
+                .getExchangeRateResponse(mockSource.getCurrencyCode());
+        Assertions.assertNotNull(mockExchangeRate);
+    }
+
+    @Test
+    void getExchangeRate_Should_ThrowUnsuccessfulResponseException_WhenResponseCodeNotOk() {
+        //Arrange
+        String invalidMockResponse = createInvalidMockResponse();
+        Currency mockSource = createMockCurrency();
+        Currency mockTarget = createAnotherMockCurrency();
+
+        Mockito.when(client.getExchangeRateResponse
+                (mockSource.getCurrencyCode())).thenReturn(invalidMockResponse);
+
+        //Act & Assert
+        Assertions.assertThrows(UnsuccessfulResponseException.class,
+                () -> currencyService.getExchangeRate(mockSource, mockTarget));
+    }
+
+    @Test
+    void createConversionAmount_Should_CreateConversion_WhenArgumentsValid() {
+        //Arrange
+        String mockResponse = createMockConversionResponse();
+        BigDecimal mockDecimal = BigDecimal.valueOf(10.0);
+
+        Mockito.when(client.getConversion(mockConversion, mockDecimal))
+                .thenReturn(mockResponse);
+
+        //Act
+        currencyService.createConversionAmount(mockConversion, mockDecimal);
+
+        //Assert
+        Mockito.verify(currencyRepo, Mockito.times(1))
+                .save(mockConversion);
+        Assertions.assertNotNull(mockConversion.getAmount());
+    }
+
+    @Test
+    void createConversion_Should_ThrowUnsuccessfulResponseException_WhenArgumentsInvalid() {
+        //Arrange
+        String invalidMockResponse = createInvalidMockResponse();
+        BigDecimal mockDecimal = BigDecimal.valueOf(10.0);
+
+        Mockito.when(client.getConversion(mockConversion, mockDecimal))
+                .thenReturn(invalidMockResponse);
+
+        //Act & Assert
+        Assertions.assertThrows(UnsuccessfulResponseException.class,
+                () -> currencyService.createConversionAmount(mockConversion, mockDecimal));
     }
 
     @Test
