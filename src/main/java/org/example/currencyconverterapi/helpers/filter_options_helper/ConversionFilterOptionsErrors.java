@@ -1,4 +1,4 @@
-package org.example.currencyconverterapi.helpers;
+package org.example.currencyconverterapi.helpers.filter_options_helper;
 
 public enum ConversionFilterOptionsErrors {
     INVALID_TIMEFRAME("The provided timeframe is invalid."),

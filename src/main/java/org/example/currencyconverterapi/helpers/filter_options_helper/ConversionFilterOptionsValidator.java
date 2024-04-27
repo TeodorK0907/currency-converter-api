@@ -1,4 +1,4 @@
-package org.example.currencyconverterapi.helpers;
+package org.example.currencyconverterapi.helpers.filter_options_helper;
 
 import org.example.currencyconverterapi.exceptions.EntityNotFoundException;
 import org.example.currencyconverterapi.exceptions.InvalidRequestException;
