@@ -4,8 +4,10 @@ import org.example.currencyconverterapi.clients.contracts.CurrencyBeaconClient;
 import org.example.currencyconverterapi.exceptions.EntityNotFoundException;
 import org.example.currencyconverterapi.exceptions.InvalidRequestException;
 import org.example.currencyconverterapi.exceptions.UnsuccessfulResponseException;
+import org.example.currencyconverterapi.helpers.ExchangeRateCacheManager;
 import org.example.currencyconverterapi.models.Conversion;
 import org.example.currencyconverterapi.models.input_dto.ConversionFilterOptions;
+import org.example.currencyconverterapi.models.input_dto.CurrencyPairDto;
 import org.example.currencyconverterapi.repositories.ConversionRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +37,8 @@ public class ConversionServiceTests {
     private ConversionRepository currencyRepo;
     @Mock
     private CurrencyBeaconClient client;
+    @Mock
+    private ExchangeRateCacheManager cacheManager;
     @InjectMocks
     private ConversionServiceImpl currencyService;
 
@@ -55,38 +59,96 @@ public class ConversionServiceTests {
     }
 
     @Test
-    void getExchangeRate_Should_ReturnExchangeRate_When_ArgumentsValid() {
+    void getExchangeRate_Should_ReturnExchangeRate_WhenArgumentsValid() {
         //Arrange
         String mockResponse = createMockExchangeRateResponse();
-        Currency mockSource = createMockCurrency();
-        Currency mockTarget = createAnotherMockCurrency();
+        CurrencyPairDto mockPair = createMockCurrencyPair();
         Double mockExchangeRate = null;
 
+        Mockito.when(cacheManager.contains(mockPair)).thenReturn(false);
+
         Mockito.when(client.getExchangeRateResponse
-                (mockSource.getCurrencyCode())).thenReturn(mockResponse);
+                (mockPair.getSource().getCurrencyCode())).thenReturn(mockResponse);
 
         //Act
-        mockExchangeRate = currencyService.getExchangeRate(mockSource, mockTarget);
+        mockExchangeRate = currencyService.getExchangeRate(mockPair);
 
         //Assert
         Mockito.verify(client, Mockito.times(1))
-                .getExchangeRateResponse(mockSource.getCurrencyCode());
+                .getExchangeRateResponse(mockPair.getSource().getCurrencyCode());
         Assertions.assertNotNull(mockExchangeRate);
+    }
+
+    @Test
+    void getExchangeRate_ShouldNot_UseCache_WhenTimeToLiveExpired() {
+        //Arrange
+        String mockResponse = createMockExchangeRateResponse();
+        CurrencyPairDto mockPair = createMockCurrencyPair();
+        Double mockExchangeRate = null;
+
+        Mockito.when(cacheManager.contains(mockPair)).thenReturn(false);
+
+        Mockito.when(client.getExchangeRateResponse
+                (mockPair.getSource().getCurrencyCode())).thenReturn(mockResponse);
+
+        //Act
+        currencyService.getExchangeRate(mockPair);
+
+        //Assert
+        Mockito.verify(cacheManager, Mockito.times(0))
+                .get(mockPair);
+    }
+
+    @Test
+    void getExchangeRate_Should_ReturnCache_WhenTimeToLiveNotExpired() {
+        //Arrange
+
+        CurrencyPairDto mockPair = createMockCurrencyPair();
+        Double mockExchangeRate = 10.0;
+        cacheManager.put(mockPair, mockExchangeRate);
+
+        Mockito.when(cacheManager.contains(mockPair)).thenReturn(true);
+        Mockito.when(cacheManager.get(mockPair)).thenReturn(mockExchangeRate);
+
+        //Act
+        Double result = currencyService.getExchangeRate(mockPair);
+
+        //Assert
+        Assertions.assertEquals(result, mockExchangeRate);
+    }
+
+    @Test
+    void getExchangeRate_ShouldNot_UseClient_WhenCacheTimeToLiveNotExpired() {
+        //Arrange
+
+        CurrencyPairDto mockPair = createMockCurrencyPair();
+        Double mockExchangeRate = 10.0;
+        cacheManager.put(mockPair, mockExchangeRate);
+
+        Mockito.when(cacheManager.contains(mockPair)).thenReturn(true);
+        Mockito.when(cacheManager.get(mockPair)).thenReturn(mockExchangeRate);
+
+        //Act
+        currencyService.getExchangeRate(mockPair);
+
+        Mockito.verify(client, Mockito.times(0))
+                .getExchangeRateResponse(mockPair.getSource().getCurrencyCode());
     }
 
     @Test
     void getExchangeRate_Should_ThrowUnsuccessfulResponseException_WhenResponseCodeNotOk() {
         //Arrange
         String invalidMockResponse = createInvalidMockResponse();
-        Currency mockSource = createMockCurrency();
-        Currency mockTarget = createAnotherMockCurrency();
+        CurrencyPairDto mockPair = createMockCurrencyPair();
+
+        Mockito.when(cacheManager.contains(mockPair)).thenReturn(false);
 
         Mockito.when(client.getExchangeRateResponse
-                (mockSource.getCurrencyCode())).thenReturn(invalidMockResponse);
+                (mockPair.getSource().getCurrencyCode())).thenReturn(invalidMockResponse);
 
         //Act & Assert
         Assertions.assertThrows(UnsuccessfulResponseException.class,
-                () -> currencyService.getExchangeRate(mockSource, mockTarget));
+                () -> currencyService.getExchangeRate(mockPair));
     }
 
     @Test

@@ -1,6 +1,7 @@
 package org.example.currencyconverterapi.helpers;
 
 import org.example.currencyconverterapi.models.Conversion;
+import org.example.currencyconverterapi.models.input_dto.CurrencyPairDto;
 
 
 import java.util.Currency;
@@ -20,6 +21,13 @@ public class Helpers {
 
     public static Currency createAnotherMockCurrency() {
         return Currency.getInstance("USD");
+    }
+
+    public static CurrencyPairDto createMockCurrencyPair() {
+        CurrencyPairDto mockPair = new CurrencyPairDto();
+        mockPair.setSource(createMockCurrency());
+        mockPair.setTarget(createAnotherMockCurrency());
+        return mockPair;
     }
 
     public static String createMockExchangeRateResponse() {
