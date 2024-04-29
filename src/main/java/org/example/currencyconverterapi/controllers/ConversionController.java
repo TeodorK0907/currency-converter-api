@@ -14,6 +14,7 @@ import org.example.currencyconverterapi.mappers.ConversionMapper;
 import org.example.currencyconverterapi.mappers.CurrencyMapper;
 import org.example.currencyconverterapi.models.Conversion;
 import org.example.currencyconverterapi.models.input_dto.ConversionFilterOptions;
+import org.example.currencyconverterapi.models.input_dto.CurrencyPairDto;
 import org.example.currencyconverterapi.models.output_dto.ConversionOutputDto;
 import org.example.currencyconverterapi.models.output_dto.ConversionOutputPageDto;
 import org.example.currencyconverterapi.models.output_dto.ExchangeRateOutputDto;
@@ -29,7 +30,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.Currency;
 
 @RestController
 @RequestMapping("/api/currency-converter")
@@ -95,9 +95,8 @@ public class ConversionController {
     public ResponseEntity<ExchangeRateOutputDto> getExchangeRate(@RequestParam String sourceCurrency,
                                                                  @RequestParam String targetCurrency) {
         try {
-            Currency source = currencyMapper.toCurrencyObj(sourceCurrency);
-            Currency target = currencyMapper.toCurrencyObj(targetCurrency);
-            double exchangeRate = conversionService.getExchangeRate(source, target);
+            CurrencyPairDto pair = currencyMapper.toPairDto(sourceCurrency, targetCurrency);
+            double exchangeRate = conversionService.getExchangeRate(pair);
             ExchangeRateOutputDto outputDto =
                     conversionMapper.toOutputDto(exchangeRate, targetCurrency);
             return ResponseEntity.ok(outputDto);
