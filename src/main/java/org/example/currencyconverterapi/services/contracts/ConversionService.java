@@ -2,14 +2,14 @@ package org.example.currencyconverterapi.services.contracts;
 
 import org.example.currencyconverterapi.models.Conversion;
 import org.example.currencyconverterapi.models.input_dto.ConversionFilterOptions;
+import org.example.currencyconverterapi.models.input_dto.CurrencyPairDto;
 import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
-import java.util.Currency;
 
 public interface ConversionService {
 
-    double getExchangeRate(Currency source, Currency target);
+    double getExchangeRate(CurrencyPairDto pair);
 
     void createConversionAmount(Conversion conversion, BigDecimal amount);
 

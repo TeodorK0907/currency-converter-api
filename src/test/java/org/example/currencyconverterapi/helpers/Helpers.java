@@ -1,6 +1,7 @@
 package org.example.currencyconverterapi.helpers;
 
 import org.example.currencyconverterapi.models.Conversion;
+import org.example.currencyconverterapi.models.input_dto.CurrencyPairDto;
 
 
 import java.util.Currency;
@@ -20,6 +21,13 @@ public class Helpers {
 
     public static Currency createAnotherMockCurrency() {
         return Currency.getInstance("USD");
+    }
+
+    public static CurrencyPairDto createMockCurrencyPair() {
+        CurrencyPairDto mockPair = new CurrencyPairDto();
+        mockPair.setSource(createMockCurrency());
+        mockPair.setTarget(createAnotherMockCurrency());
+        return mockPair;
     }
 
     public static String createMockExchangeRateResponse() {
@@ -514,6 +522,25 @@ public class Helpers {
                     "to": "BGN",
                     "amount": 20,
                     "value": 36.5665814
+                }
+                """;
+    }
+
+    public static String createInvalidMockConversionAmount() {
+        return """
+                {
+                    "meta": {
+                        "code": 200,
+                        "disclaimer": "Usage subject to terms: https://currencybeacon.com/terms"
+                    },
+                    "response": {
+                        "timestamp": 1714209350,
+                        "date": "2024-04-27",
+                        "from": "USD",
+                        "to": "BGN",
+                        "amount": 20,
+                        "value": null
+                    },
                 }
                 """;
     }
