@@ -90,7 +90,7 @@ public class ConversionServiceTests {
     }
 
     @Test
-    void createConversionAmount_Should_CreateConversion_WhenArgumentsValid() {
+    void createConversionAmount_Should_InvokeRepository_WhenResponseOk() {
         //Arrange
         String mockResponse = createMockConversionResponse();
         BigDecimal mockDecimal = BigDecimal.valueOf(10.0);
@@ -104,7 +104,36 @@ public class ConversionServiceTests {
         //Assert
         Mockito.verify(currencyRepo, Mockito.times(1))
                 .save(mockConversion);
+    }
+
+    @Test
+    void createConversionAmount_Should_SetConversionAmount_WhenArgumentsValid() {
+        //Arrange
+        String mockResponse = createMockConversionResponse();
+        BigDecimal mockDecimal = BigDecimal.valueOf(10.0);
+
+        Mockito.when(client.getConversion(mockConversion, mockDecimal))
+                .thenReturn(mockResponse);
+
+        //Act
+        currencyService.createConversionAmount(mockConversion, mockDecimal);
+
+        //Assert
         Assertions.assertNotNull(mockConversion.getAmount());
+    }
+
+    @Test
+    void createConversion_Should_ThrowNumberFormatException_WhenResponseValueNotValid() {
+        //Arrange
+        String mockResponse = createInvalidMockConversionAmount();
+        BigDecimal mockDecimal = BigDecimal.valueOf(10.0);
+
+        Mockito.when(client.getConversion(mockConversion, mockDecimal))
+                .thenReturn(mockResponse);
+
+        //Act & Assert
+        Assertions.assertThrows(NumberFormatException.class,
+                () -> currencyService.createConversionAmount(mockConversion, mockDecimal));
     }
 
     @Test
