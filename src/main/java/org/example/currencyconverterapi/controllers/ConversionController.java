@@ -154,17 +154,17 @@ public class ConversionController {
             }
     )
     public ResponseEntity<Conversion> createConversion(@RequestParam String sourceCurrency,
-                                                                @RequestParam String targetCurrency,
-                                                                @RequestBody @Valid SourceCurrencyAmountDto amountDto) {
+                                                       @RequestParam String targetCurrency,
+                                                       @RequestBody @Valid SourceCurrencyAmountDto amountDto) {
 
         try {
             Conversion conversion = conversionMapper.toObj(sourceCurrency, targetCurrency);
             conversionService.createConversionAmount(conversion, amountDto.getAmount());
-           // ConversionOutputDto outputDto = conversionMapper.toOutputDto(conversion);
+            // ConversionOutputDto outputDto = conversionMapper.toOutputDto(conversion);
             return ResponseEntity.ok(conversion);
         } catch (InvalidCurrencyCodeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        } catch (UnsuccessfulResponseException e) {
+        } catch (UnsuccessfulResponseException | NumberFormatException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
@@ -235,13 +235,14 @@ public class ConversionController {
                     )
             }
     )
-    public ResponseEntity<ConversionOutputPageDto> getConversions(@RequestParam(required = false)
-                                                                  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime after,
-                                                                  @RequestParam(required = false)
-                                                                  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime before,
-                                                                  @RequestParam(required = false) String transactionId,
-                                                                  @RequestParam(required = false) Integer pageNumber,
-                                                                  @RequestParam(required = false) Integer pageSize) {
+    public ResponseEntity<ConversionOutputPageDto> getConversions(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime after,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime before,
+            @RequestParam(required = false) String transactionId,
+            @RequestParam(required = false) Integer pageNumber,
+            @RequestParam(required = false) Integer pageSize) {
 
         try {
             ConversionFilterOptions filterOptions = new ConversionFilterOptions

@@ -7,6 +7,7 @@ import org.example.currencyconverterapi.models.Conversion;
 import org.example.currencyconverterapi.models.input_dto.ConversionFilterOptions;
 import org.example.currencyconverterapi.repositories.ConversionRepository;
 import org.example.currencyconverterapi.services.contracts.ConversionService;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
@@ -100,6 +101,10 @@ public class ConversionServiceImpl implements ConversionService {
 
     private void processConversion(Conversion conversion, JSONObject response) {
         conversion.setTimeStamp(LocalDateTime.now());
-        conversion.setAmount(BigDecimal.valueOf(response.getDouble(RESPONSE_KEY_VALUE)));
+        try {
+            conversion.setAmount(response.getBigDecimal(RESPONSE_KEY_VALUE));
+        } catch (JSONException e) {
+            throw new NumberFormatException(COULD_NOT_PROCESS_REQUEST_ERROR_MESSAGE);
+        }
     }
 }
