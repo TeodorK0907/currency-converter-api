@@ -517,4 +517,23 @@ public class Helpers {
                 }
                 """;
     }
+
+    public static String createInvalidMockConversionAmount() {
+        return """
+                {
+                    "meta": {
+                        "code": 200,
+                        "disclaimer": "Usage subject to terms: https://currencybeacon.com/terms"
+                    },
+                    "response": {
+                        "timestamp": 1714209350,
+                        "date": "2024-04-27",
+                        "from": "USD",
+                        "to": "BGN",
+                        "amount": 20,
+                        "value": null
+                    },
+                }
+                """;
+    }
 }
