@@ -3,6 +3,7 @@ package org.example.currencyconverterapi.services;
 import org.example.currencyconverterapi.clients.contracts.CurrencyBeaconClient;
 import org.example.currencyconverterapi.exceptions.UnsuccessfulResponseException;
 import org.example.currencyconverterapi.helpers.ExchangeRateCacheManager;
+import org.example.currencyconverterapi.helpers.ExchangeRateCacheValidator;
 import org.example.currencyconverterapi.helpers.filter_options_helper.ConversionFilterOptionsValidator;
 import org.example.currencyconverterapi.models.Conversion;
 import org.example.currencyconverterapi.models.input_dto.ConversionFilterOptions;
@@ -45,6 +46,9 @@ public class ConversionServiceImpl implements ConversionService {
 
     @Override
     public double getExchangeRate(CurrencyPairDto pair) {
+        if (ExchangeRateCacheValidator.isCacheExpired(cacheManager)) {
+            ExchangeRateCacheValidator.refreshCache(cacheManager);
+        }
         if (cacheManager.contains(pair)) {
             return cacheManager.get(pair);
         } else {
