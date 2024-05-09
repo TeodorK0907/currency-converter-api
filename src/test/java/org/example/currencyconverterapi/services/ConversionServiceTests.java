@@ -25,7 +25,6 @@ import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Currency;
 import java.util.List;
 
 import static org.example.currencyconverterapi.helpers.Helpers.*;
@@ -39,6 +38,7 @@ public class ConversionServiceTests {
     private CurrencyBeaconClient client;
     @Mock
     private ExchangeRateCacheManager cacheManager;
+
     @InjectMocks
     private ConversionServiceImpl currencyService;
 
@@ -63,7 +63,10 @@ public class ConversionServiceTests {
         //Arrange
         String mockResponse = createMockExchangeRateResponse();
         CurrencyPairDto mockPair = createMockCurrencyPair();
+        LocalDateTime mockTime = LocalDateTime.now();
         Double mockExchangeRate = null;
+
+        Mockito.when(cacheManager.getLastRefreshTimeStamp()).thenReturn(LocalDateTime.now());
 
         Mockito.when(cacheManager.contains(mockPair)).thenReturn(false);
 
@@ -86,6 +89,9 @@ public class ConversionServiceTests {
         CurrencyPairDto mockPair = createMockCurrencyPair();
         Double mockExchangeRate = null;
 
+        Mockito.when(cacheManager.getLastRefreshTimeStamp())
+                .thenReturn(LocalDateTime.of(-99, 1, 1, 0 , 0));
+
         Mockito.when(cacheManager.contains(mockPair)).thenReturn(false);
 
         Mockito.when(client.getExchangeRateResponse
@@ -105,9 +111,13 @@ public class ConversionServiceTests {
 
         CurrencyPairDto mockPair = createMockCurrencyPair();
         Double mockExchangeRate = 10.0;
+
         cacheManager.put(mockPair, mockExchangeRate);
 
+        Mockito.when(cacheManager.getLastRefreshTimeStamp()).thenReturn(LocalDateTime.now());
+
         Mockito.when(cacheManager.contains(mockPair)).thenReturn(true);
+
         Mockito.when(cacheManager.get(mockPair)).thenReturn(mockExchangeRate);
 
         //Act
@@ -123,9 +133,13 @@ public class ConversionServiceTests {
 
         CurrencyPairDto mockPair = createMockCurrencyPair();
         Double mockExchangeRate = 10.0;
+
         cacheManager.put(mockPair, mockExchangeRate);
 
+        Mockito.when(cacheManager.getLastRefreshTimeStamp()).thenReturn(LocalDateTime.now());
+
         Mockito.when(cacheManager.contains(mockPair)).thenReturn(true);
+
         Mockito.when(cacheManager.get(mockPair)).thenReturn(mockExchangeRate);
 
         //Act
@@ -140,6 +154,8 @@ public class ConversionServiceTests {
         //Arrange
         String invalidMockResponse = createInvalidMockResponse();
         CurrencyPairDto mockPair = createMockCurrencyPair();
+
+        Mockito.when(cacheManager.getLastRefreshTimeStamp()).thenReturn(LocalDateTime.now());
 
         Mockito.when(cacheManager.contains(mockPair)).thenReturn(false);
 
